@@ -47,7 +47,8 @@ func GetMenuByID() gin.HandlerFunc {
 		menuId := c.Param("menu_id")
 		var menu models.Menu
 
-		err := getMenuCollection().FindOne(ctx, bson.M{"menu_id": menuId}).Decode(&menu)
+		filter := bson.M{"$or": []bson.M{{"menu_id": menuId}, {"menuid": menuId}}}
+		err := getMenuCollection().FindOne(ctx, filter).Decode(&menu)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "error occurred while fetching the menu"})
 			return
@@ -119,7 +120,7 @@ func UpdateMenu() gin.HandlerFunc {
 		updateObj = append(updateObj, bson.E{Key: "updated_at", Value: menu.UpdatedAt})
 
 		upsert := true
-		filter := bson.M{"menu_id": menuId}
+		filter := bson.M{"$or": []bson.M{{"menu_id": menuId}, {"menuid": menuId}}}
 		opt := options.UpdateOptions{
 			Upsert: &upsert,
 		}

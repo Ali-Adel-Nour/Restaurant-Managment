@@ -109,10 +109,14 @@ func CreateFood() gin.HandlerFunc {
 			return
 		}
 
-		// Verify menu exists
-		err := getMenuCollection().FindOne(ctx, bson.M{"menu_id": food.MenuID}).Decode(&menu)
+		// Verify menu exists. Support legacy documents that were saved with "menuid".
+		menuFilter := bson.M{"$or": []bson.M{
+			{"menu_id": food.MenuID},
+			{"menuid": food.MenuID},
+		}}
+		err := getMenuCollection().FindOne(ctx, menuFilter).Decode(&menu)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "menu was not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "menu was not found"})
 			return
 		}
 
@@ -161,9 +165,13 @@ func UpdateFood() gin.HandlerFunc {
 
 		if food.MenuID != nil {
 			var menu models.Menu
-			err := getMenuCollection().FindOne(ctx, bson.M{"menu_id": food.MenuID}).Decode(&menu)
+			menuFilter := bson.M{"$or": []bson.M{
+				{"menu_id": food.MenuID},
+				{"menuid": food.MenuID},
+			}}
+			err := getMenuCollection().FindOne(ctx, menuFilter).Decode(&menu)
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "menu was not found"})
+				c.JSON(http.StatusNotFound, gin.H{"error": "menu was not found"})
 				return
 			}
 			updateObj = append(updateObj, bson.E{Key: "menu_id", Value: food.MenuID})
